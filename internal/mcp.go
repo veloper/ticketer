@@ -147,6 +147,10 @@ func jsonResult(v any) *mcp.CallToolResult {
 	if err != nil {
 		return mcp.NewToolResultError("marshal: " + err.Error())
 	}
+	// Strip StructuredContent — the Python MCP client (langchain)
+	// expects a dict but NewToolResultJSON stores the raw Go value,
+	// which is a slice for list responses.
+	r.StructuredContent = nil
 	return r
 }
 
