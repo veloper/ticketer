@@ -1,46 +1,47 @@
 package internal
 
-import "time"
-
 type User struct {
-	ID          string `json:"id"`
+	ID          int64  `json:"id"`
 	Username    string `json:"username"`
 	DisplayName string `json:"display_name"`
+	IsAdmin     bool   `json:"is_admin"`
+	PAT         string `json:"pat,omitempty"`
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
 }
 
 type Project struct {
-	ID          string `json:"id"`
+	ID          int64  `json:"id"`
 	Name        string `json:"name"`
+	Slug        string `json:"slug"`
 	Description string `json:"description"`
-	CreatedBy   string `json:"created_by"`
+	CreatedBy   int64  `json:"created_by"`
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
 }
 
 type Issue struct {
-	ID          string `json:"id"`
-	ProjectID   string `json:"project_id"`
-	Slug  string `json:"slug"`
+	ID          int64  `json:"id"`
+	ProjectID   int64  `json:"project_id"`
+	Slug        string `json:"slug"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Type        string `json:"type"`
 	State       string `json:"state"`
-	Assignee    string `json:"assignee"`
+	Assignee    int64  `json:"assignee,omitempty"`
 	Priority    int    `json:"priority"`
-	ParentID    string `json:"parent_id,omitempty"`
-	CreatedBy   string `json:"created_by"`
+	ParentID    int64  `json:"parent_id,omitempty"`
+	CreatedBy   int64  `json:"created_by"`
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
 }
 
 type Comment struct {
-	ID        string `json:"id"`
-	IssueID   string `json:"issue_id"`
+	ID        int64  `json:"id"`
+	IssueID   int64  `json:"issue_id"`
 	Body      string `json:"body"`
-	Author    string `json:"author"`
-	CreatedBy string `json:"created_by"`
+	Author    int64  `json:"author"`
+	CreatedBy int64  `json:"created_by"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
@@ -49,18 +50,22 @@ type SeedUser struct {
 	Username    string `json:"username"`
 	DisplayName string `json:"display_name"`
 	PAT         string `json:"pat"`
+	Admin       bool   `json:"admin"`
 }
 
 type Config struct {
-	Users      []SeedUser `json:"users"`
-	DefaultPAT string     `json:"default_pat"`
-	DBPath     string     `json:"db_path"`
-	Addr       string     `json:"addr"`
+	AdminUsername string `json:"admin_username"`
+	AdminPAT      string `json:"admin_pat"`
+	DBPath        string `json:"db_path"`
+	Host          string `json:"host"`
+	Port          string `json:"port"`
 }
 
-var ValidStates = []string{"backlog", "todo", "in_progress", "review", "done", "cancelled"}
+// Addr returns the listen address from Host and Port.
+func (c *Config) Addr() string {
+	return c.Host + ":" + c.Port
+}
+
+var ValidStates = []string{"backlog", "todo", "in_progress", "qa", "done", "cancelled"}
 var ValidTypes = []string{"epic", "feature", "bug", "chore"}
-
-func now() string {
-	return time.Now().UTC().Format(time.RFC3339)
-}
+var ValidPriorityLevels = []int{0, 1, 2, 3, 4}

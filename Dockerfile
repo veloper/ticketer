@@ -1,13 +1,18 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.25-alpine AS builder
 WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -o ticketer ./cmd/ticketer
+RUN CGO_ENABLED=0 go build -o ticketer ./cmd/ticketer && \
+    CGO_ENABLED=0 go build -o tktrctl ./cmd/tktrctl
 
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates
 WORKDIR /data
 COPY --from=builder /build/ticketer /usr/local/bin/ticketer
-EXPOSE 8080
+COPY --from=builder /build/tktrctl /usr/local/bin/tktrctl
+ENV TICKETER_DB_PATH=/data/ticketer.db
+ENV TICKETER_ADMIN_USERNAME=admin
+ENV TICKETER_ADMIN_PAT=pat_admin
+EXPOSE 8300
 CMD ["ticketer"]

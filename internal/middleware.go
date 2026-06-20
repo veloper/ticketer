@@ -18,6 +18,11 @@ func PATMiddleware(store *Store) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
+			// WebSocket endpoint authenticates via ?pat= query param instead.
+			if r.URL.Path == "/api/ws" || r.URL.Path == "/mcp" {
+				next.ServeHTTP(w, r)
+				return
+			}
 
 			pat := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 			if pat == "" {
