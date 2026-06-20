@@ -62,11 +62,13 @@ func (s *Store) migrate() error {
 	);
 	CREATE TABLE IF NOT EXISTS issues (
 		id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
-		sequence_id TEXT NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL,
-		state TEXT NOT NULL DEFAULT 'todo', assignee TEXT REFERENCES users(id),
-		priority INTEGER NOT NULL DEFAULT 3, created_by TEXT NOT NULL REFERENCES users(id),
+		slug TEXT NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL,
+		type TEXT NOT NULL DEFAULT 'feature', state TEXT NOT NULL DEFAULT 'todo',
+		assignee TEXT REFERENCES users(id),
+		priority INTEGER NOT NULL DEFAULT 3, parent_id TEXT REFERENCES issues(id),
+		created_by TEXT NOT NULL REFERENCES users(id),
 		created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
-		UNIQUE(project_id, sequence_id)
+		UNIQUE(project_id, slug)
 	);
 	CREATE TABLE IF NOT EXISTS comments (
 		id TEXT PRIMARY KEY, issue_id TEXT NOT NULL REFERENCES issues(id),
@@ -194,7 +196,7 @@ func (s *Store) DeleteProject(id string) error {
 
 // ── Issues ──
 
-func (s *Store) NextSequenceID(projectID string) (string, error) {
+func (s *Store) NextSlug(projectID string) (string, error) {
 	p, err := s.GetProject(projectID)
 	if err != nil {
 		return "", err
@@ -224,30 +226,36 @@ func (s *Store) NextSequenceID(projectID string) (string, error) {
 	return fmt.Sprintf("%s-%d", prefix, counter), nil
 }
 
-func (s *Store) CreateIssue(projectID, title, description, state, assignee, createdBy string, priority int) (*Issue, error) {
-	seq, err := s.NextSequenceID(projectID)
+func (s *Store) CreateIssue(projectID, title, description, typ, state, assignee, parentID, createdBy string, priority int) (*Issue, error) {
+	seq, err := s.NextSlug(projectID)
 	if err != nil {
 		return nil, err
 	}
 	if state == "" {
 		state = "todo"
 	}
+	if typ == "" {
+		typ = "feature"
+	}
 	iss := &Issue{
-		ID: newID(), ProjectID: projectID, SequenceID: seq,
-		Title: title, Description: description, State: state,
-		Assignee: assignee, Priority: priority, CreatedBy: createdBy,
+		ID: newID(), ProjectID: projectID, Slug: seq,
+		Title: title, Description: description, Type: typ,
+		State: state, Assignee: assignee, Priority: priority,
+		ParentID: parentID, CreatedBy: createdBy,
 		CreatedAt: now(), UpdatedAt: now(),
 	}
 	_, err = s.db.Exec(
-		`INSERT INTO issues (id, project_id, sequence_id, title, description, state, assignee, priority, created_by, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		iss.ID, iss.ProjectID, iss.SequenceID, iss.Title, iss.Description,
-		iss.State, iss.Assignee, iss.Priority, iss.CreatedBy, iss.CreatedAt, iss.UpdatedAt,
+		`INSERT INTO issues (id, project_id, slug, title, description, type, state, assignee, priority, parent_id, created_by, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		iss.ID, iss.ProjectID, iss.Slug, iss.Title, iss.Description,
+		iss.Type, iss.State, iss.Assignee, iss.Priority, iss.ParentID,
+		iss.CreatedBy, iss.CreatedAt, iss.UpdatedAt,
 	)
 	return iss, err
 }
 
 type IssueFilter struct {
+	Type      string
 	State     string
 	Assignee  string
 	CreatedBy string
@@ -287,7 +295,7 @@ func (s *Store) ListIssues(projectID string, f IssueFilter) ([]Issue, error) {
 	offset := (f.Page - 1) * f.PerPage
 
 	q := fmt.Sprintf(
-		`SELECT id, project_id, sequence_id, title, description, state, assignee, priority, created_by, created_at, updated_at
+		`SELECT id, project_id, slug, title, description, type, state, assignee, priority, parent_id, created_by, created_at, updated_at
 		 FROM issues WHERE %s ORDER BY created_at DESC LIMIT ? OFFSET ?`,
 		strings.Join(where, " AND "),
 	)
@@ -302,7 +310,7 @@ func (s *Store) ListIssues(projectID string, f IssueFilter) ([]Issue, error) {
 	var out []Issue
 	for rows.Next() {
 		var i Issue
-		if err := rows.Scan(&i.ID, &i.ProjectID, &i.SequenceID, &i.Title, &i.Description,
+		if err := rows.Scan(&i.ID, &i.ProjectID, &i.Slug, &i.Title, &i.Description,
 			&i.State, &i.Assignee, &i.Priority, &i.CreatedBy, &i.CreatedAt, &i.UpdatedAt); err != nil {
 			return nil, err
 		}
@@ -314,14 +322,14 @@ func (s *Store) ListIssues(projectID string, f IssueFilter) ([]Issue, error) {
 func (s *Store) GetIssue(id string) (*Issue, error) {
 	i := &Issue{}
 	err := s.db.QueryRow(
-		`SELECT id, project_id, sequence_id, title, description, state, assignee, priority, created_by, created_at, updated_at
+		`SELECT id, project_id, slug, title, description, type, state, assignee, priority, parent_id, created_by, created_at, updated_at
 		 FROM issues WHERE id = ?`, id,
-	).Scan(&i.ID, &i.ProjectID, &i.SequenceID, &i.Title, &i.Description,
+	).Scan(&i.ID, &i.ProjectID, &i.Slug, &i.Title, &i.Description,
 		&i.State, &i.Assignee, &i.Priority, &i.CreatedBy, &i.CreatedAt, &i.UpdatedAt)
 	return i, err
 }
 
-func (s *Store) UpdateIssue(id, title, description, state, assignee string, priority int) (*Issue, error) {
+func (s *Store) UpdateIssue(id, title, description, typ, state, assignee, parentID string, priority int) (*Issue, error) {
 	i, err := s.GetIssue(id)
 	if err != nil {
 		return nil, err

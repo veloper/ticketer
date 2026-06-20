@@ -22,12 +22,14 @@ type Project struct {
 type Issue struct {
 	ID          string `json:"id"`
 	ProjectID   string `json:"project_id"`
-	SequenceID  string `json:"sequence_id"`
+	Slug  string `json:"slug"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
+	Type        string `json:"type"`
 	State       string `json:"state"`
 	Assignee    string `json:"assignee"`
 	Priority    int    `json:"priority"`
+	ParentID    string `json:"parent_id,omitempty"`
 	CreatedBy   string `json:"created_by"`
 	CreatedAt   string `json:"created_at"`
 	UpdatedAt   string `json:"updated_at"`
@@ -57,6 +59,7 @@ type Config struct {
 }
 
 var ValidStates = []string{"backlog", "todo", "in_progress", "review", "done", "cancelled"}
+var ValidTypes = []string{"epic", "feature", "bug", "chore"}
 
 func now() string {
 	return time.Now().UTC().Format(time.RFC3339)

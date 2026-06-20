@@ -128,7 +128,8 @@ func (h *Handler) ListIssues(w http.ResponseWriter, r *http.Request) {
 	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
 
 	f := IssueFilter{
-		State:     r.URL.Query().Get("state"),
+		Type:      r.URL.Query().Get("type"),
+			State:     r.URL.Query().Get("state"),
 		Assignee:  r.URL.Query().Get("assignee"),
 		CreatedBy: r.URL.Query().Get("created_by"),
 		Query:     r.URL.Query().Get("q"),
@@ -155,6 +156,7 @@ func (h *Handler) CreateIssue(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Title       string `json:"title"`
 		Description string `json:"description"`
+		Type        string `json:"type"`
 		State       string `json:"state"`
 		Assignee    string `json:"assignee"`
 		Priority    int    `json:"priority"`
@@ -168,7 +170,7 @@ func (h *Handler) CreateIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := UserFromCtx(r.Context())
-	iss, err := h.store.CreateIssue(projectID, body.Title, body.Description, body.State, body.Assignee, user.ID, body.Priority)
+	iss, err := h.store.CreateIssue(projectID, body.Title, body.Description, body.Type, body.State, body.Assignee, "", user.ID, body.Priority)
 	if err != nil {
 		jsonErr(w, 500, err.Error())
 		return
@@ -191,6 +193,7 @@ func (h *Handler) UpdateIssue(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Title       string `json:"title"`
 		Description string `json:"description"`
+		Type        string `json:"type"`
 		State       string `json:"state"`
 		Assignee    string `json:"assignee"`
 		Priority    int    `json:"priority"`
@@ -199,7 +202,7 @@ func (h *Handler) UpdateIssue(w http.ResponseWriter, r *http.Request) {
 		jsonErr(w, 400, "invalid json")
 		return
 	}
-	iss, err := h.store.UpdateIssue(id, body.Title, body.Description, body.State, body.Assignee, body.Priority)
+	iss, err := h.store.UpdateIssue(id, body.Title, body.Description, body.Type, body.State, body.Assignee, "", body.Priority)
 	if err != nil {
 		jsonErr(w, 500, err.Error())
 		return
