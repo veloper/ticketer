@@ -9,6 +9,8 @@
 
 ## Quickstart
 
+Run with Docker Compose:
+
 ```yaml
 services:
   ticketer:
