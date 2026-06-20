@@ -42,7 +42,7 @@ Built for the way AI agents work — API-first, zero setup.
 | **[tktrctl CLI](docs/cli.md)** | Script your workflow, automate bootstrapping. |
 | **[WebSocket](docs/websocket.md)** | Real-time updates without polling. |
 | **[Single Docker Container](docs/docker.md)** | Everything in one image. Compose, automate, done. |
-| **[Single Go binary](docs/architecture.md)** | Compiled, static, dependency-free. Just the binary and a SQLite file. |
+| **[Single Go Binary](docs/architecture.md)** | Compiled, static, dependency-free. Just the binary and a SQLite file. |
 
 ## Configuration
 
