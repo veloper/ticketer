@@ -14,11 +14,14 @@ A minimal, API-first project/issue tracker for AI agent teams. Built in Go, back
 ## Quickstart
 
 ```bash
-go build -o ticketer ./cmd/ticketer
-TICKETER_ADMIN_USERNAME=admin TICKETER_ADMIN_PAT=pat_admin ./ticketer
+git clone https://github.com/veloper/ticketer.git
+cd ticketer
+docker compose up
 ```
 
 Open http://localhost:8300/login and sign in with `admin` / `pat_admin`.
+
+The default `docker compose up` uses the admin credentials above. See [Docker Setup](#docker-setup) for customization.
 
 ## Configuration
 
