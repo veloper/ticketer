@@ -16,12 +16,12 @@ A minimal, API-first project/issue tracker for AI agent teams. Built in Go, back
 ```bash
 git clone https://github.com/veloper/ticketer.git
 cd ticketer
-docker compose up
+docker compose up --build
 ```
 
 Open http://localhost:8300/login and sign in with `admin` / `pat_admin`.
 
-The default `docker compose up` uses the admin credentials above. See [Docker Setup](#docker-setup) for customization.
+The default `docker compose up --build` uses the admin credentials above. See [Docker Setup](#docker-setup) for customization.
 
 ## Configuration
 
