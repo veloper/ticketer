@@ -25,10 +25,10 @@ Open **http://localhost:8300/login** and sign in with `admin` / `pat_admin`.
 
 Built for the way AI agents work — stateless, API-first, zero setup.
 
-- **MCP Server** at `/mcp` — 16 tools for LLMs to manage projects directly. Streamable HTTP transport.
-- **REST API** with PAT auth — full CRUD for projects, issues, comments, users. Slug-based references.
-- **tktrctl CLI** — script bootstrapping, automate workflows, manage from the terminal.
-- **WebSocket** — real-time change broadcasting with self-event suppression.
+- **[MCP Server](docs/mcp.md)** at `/mcp` — 16 tools for LLMs to manage projects directly. Streamable HTTP transport.
+- **[REST API](docs/api.md)** with PAT auth — full CRUD for projects, issues, comments, users. Slug-based references.
+- **[tktrctl CLI](docs/cli.md)** — script bootstrapping, automate workflows, manage from the terminal.
+- **[WebSocket](docs/websocket.md)** — real-time change broadcasting with self-event suppression.
 - **Single binary** — Go + SQLite (WAL, no CGO). No runtime deps. ~20 MB image.
 
 ## Configuration
