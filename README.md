@@ -2,14 +2,6 @@
 
 A minimal, API-first project/issue tracker for AI agent teams. Built in Go, backed by SQLite, with an embedded kanban web UI and an MCP server for LLM-driven management.
 
-## Features
-
-- **REST API** — full CRUD for projects, issues, comments, users. PAT-based auth.
-- **Web UI** — kanban board, issue detail, comments. Login with your PAT.
-- **MCP Server** — 16 tools for LLMs to manage projects directly (Streamable HTTP).
-- **WebSocket** — real-time change broadcasting with self-event suppression.
-- **CLI** — `tktrctl` for scripting, bootstrapping, and automation.
-- **Single binary** — Go + embedded SQLite (WAL mode, zero CGO). No runtime deps.
 
 ## Quickstart
 
@@ -24,6 +16,29 @@ Open http://localhost:8300/login and sign in with `admin` / `pat_admin`.
 
 The default `docker compose up --build` uses the admin credentials above. See [Docker Setup](#docker-setup) for customization.
 
+
+## Features
+
+- **REST API** — full CRUD for projects, issues, comments, users. PAT-based auth.
+- **Web UI** — kanban board, issue detail, comments. Login with your PAT.
+- **MCP Server** — 16 tools for LLMs to manage projects directly (Streamable HTTP).
+- **WebSocket** — real-time change broadcasting with self-event suppression.
+- **CLI** — `tktrctl` for scripting, bootstrapping, and automation.
+- **Single binary** — Go + embedded SQLite (WAL mode, zero CGO). No runtime deps.
+
+
+## Web UI
+
+The kanban board is served on the same port as the API. Sign in at `/login` with your admin credentials.
+
+| Route | View |
+|-------|------|
+| `/login` | Sign in with username + PAT |
+| `/` | Projects list |
+| `/projects/{id}` | Kanban board grouped by state |
+| `/issues/{id}` | Issue detail with comments and state controls |
+
+
 ## Configuration
 
 | Env var | Default | Description |
@@ -35,6 +50,7 @@ The default `docker compose up --build` uses the admin credentials above. See [D
 | `TICKETER_DB_PATH` | `"ticketer.db"` | SQLite database path (`/data/ticketer.db` in Docker) |
 
 The admin user is created on startup. Additional users can be created via the API or CLI by the admin.
+
 
 ## Docker Setup
 
@@ -106,6 +122,7 @@ services:
 
 Run with: `docker compose --profile setup run setup`
 
+
 ## CLI (tktrctl)
 
 A companion CLI for bootstrapping and managing the server. Configured via environment variables — no flags needed.
@@ -137,16 +154,6 @@ tktrctl issues state ASTEROID-GAME-42 qa
 
 Projects and issues can be referenced by numeric ID or slug. Set `TICKETER_PAT` to your admin PAT.
 
-## Web UI
-
-The kanban board is served on the same port as the API. Sign in at `/login` with your admin credentials.
-
-| Route | View |
-|-------|------|
-| `/login` | Sign in with username + PAT |
-| `/` | Projects list |
-| `/projects/{id}` | Kanban board grouped by state |
-| `/issues/{id}` | Issue detail with comments and state controls |
 
 ## API
 
@@ -199,6 +206,7 @@ GET    /api/me                        Get current user
 GET    /api/info                      Server metadata (states, types, priorities, users, projects)
 ```
 
+
 ## MCP Server
 
 A Model Context Protocol server is available for LLM-driven project management.
@@ -240,6 +248,7 @@ SDK:       github.com/mark3labs/mcp-go
 }
 ```
 
+
 ## Data Model
 
 ```
@@ -255,6 +264,7 @@ User ──┬── Project   (created_by)
 **Priority**: `0`=none, `1`=urgent, `2`=high, `3`=medium, `4`=low
 
 Issues get auto-generated slugs like `ASTEROID-GAME-42` using the project slug and the issue's auto-increment ID.
+
 
 ## Architecture
 
@@ -274,6 +284,7 @@ Issues get auto-generated slugs like `ASTEROID-GAME-42` using the project slug a
 
 Single Go binary, zero runtime dependencies. All services share the same port.
 
+
 ## Development
 
 ```bash
@@ -287,3 +298,4 @@ go build -o tktrctl ./cmd/tktrctl
 # Build Docker image
 docker build -t ticketer .
 ```
+
