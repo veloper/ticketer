@@ -12,7 +12,5 @@ WORKDIR /data
 COPY --from=builder /build/ticketer /usr/local/bin/ticketer
 COPY --from=builder /build/tktrctl /usr/local/bin/tktrctl
 ENV TICKETER_DB_PATH=/data/ticketer.db
-ENV TICKETER_ADMIN_USERNAME=admin
-ENV TICKETER_ADMIN_PAT=pat_admin
 EXPOSE 8300
 CMD ["ticketer"]

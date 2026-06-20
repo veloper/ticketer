@@ -14,9 +14,10 @@ A minimal, API-first project/issue tracker for AI agent teams. Built in Go, back
 ## Quickstart
 
 ```bash
-git clone https://github.com/veloper/ticketer.git
-cd ticketer
-docker compose up --build
+docker run -p 8300:8300 \
+  -e TICKETER_ADMIN_USERNAME=admin \
+  -e TICKETER_ADMIN_PAT=pat_admin \
+  veloper/ticketer
 ```
 
 Open http://localhost:8300/login and sign in with `admin` / `pat_admin`.
@@ -40,11 +41,11 @@ The admin user is created on startup. Additional users can be created via the AP
 ### Single container
 
 ```bash
-docker build -t ticketer .
+docker pull veloper/ticketer
 docker run -p 8300:8300 \
   -e TICKETER_ADMIN_USERNAME=admin \
   -e TICKETER_ADMIN_PAT=pat_admin \
-  ticketer
+  veloper/ticketer
 ```
 
 ### Docker Compose
