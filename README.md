@@ -43,7 +43,13 @@ Open http://localhost:8300/login and sign in with `admin` / `pat_admin`.
 
 ## Docs
 
-| File | Contents |
-|------|----------|
-| [`docs/reference.md`](docs/reference.md) | API, CLI, MCP, WebSocket, Data Model, Docker, Architecture |
+| Doc | Contents |
+|-----|----------|
+| [`docs/api.md`](docs/api.md) | REST API reference |
+| [`docs/cli.md`](docs/cli.md) | tktrctl commands |
+| [`docs/mcp.md`](docs/mcp.md) | MCP server tools and config |
+| [`docs/websocket.md`](docs/websocket.md) | WebSocket events |
+| [`docs/data-model.md`](docs/data-model.md) | States, types, priorities, slugs |
+| [`docs/docker.md`](docs/docker.md) | Docker Compose and automation |
+| [`docs/architecture.md`](docs/architecture.md) | System architecture diagram |
 | [`AGENTS.md`](AGENTS.md) | Agent guide — how to use Ticketer programmatically |
