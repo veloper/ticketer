@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"strconv"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -154,6 +155,29 @@ func jsonResult(v any) *mcp.CallToolResult {
 	return r
 }
 
+func cleanErr(err error) string {
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, "UNIQUE constraint failed"):
+		if strings.Contains(msg, "projects.slug") {
+			return "a project with this slug already exists"
+		}
+		if strings.Contains(msg, "users.username") {
+			return "a user with this username already exists"
+		}
+		if strings.Contains(msg, "users.pat") {
+			return "a user with this PAT already exists"
+		}
+		return "a record with that unique value already exists"
+	case strings.Contains(msg, "FOREIGN KEY constraint failed"):
+		return "referenced entity does not exist"
+	case strings.Contains(msg, "no rows in result set"):
+		return "not found"
+	default:
+		return msg
+	}
+}
+
 func resolveProjectID(store *Store, id string) (int64, string) {
 	if n, err := strconv.ParseInt(id, 10, 64); err == nil {
 		return n, ""
@@ -197,7 +221,7 @@ func handleListUsers(store *Store) func(ctx context.Context, req mcp.CallToolReq
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		users, err := store.ListUsers()
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
 		return jsonResult(users), nil
 	}
@@ -218,7 +242,7 @@ func handleListProjects(store *Store) func(ctx context.Context, req mcp.CallTool
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		projects, err := store.ListProjects()
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
 		return jsonResult(projects), nil
 	}
@@ -248,7 +272,7 @@ func handleCreateProject(store *Store) func(ctx context.Context, req mcp.CallToo
 		// Need a user context — for MCP we use user ID 1 (admin)
 		p, err := store.CreateProject(name, slug, desc, 1)
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
 		return jsonResult(p), nil
 	}
@@ -267,7 +291,7 @@ func handleUpdateProject(store *Store) func(ctx context.Context, req mcp.CallToo
 		desc, _ := args["description"].(string)
 		p, err := store.UpdateProject(id, name, slug, desc)
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
 		return jsonResult(p), nil
 	}
@@ -281,9 +305,9 @@ func handleDeleteProject(store *Store) func(ctx context.Context, req mcp.CallToo
 			return mcp.NewToolResultError(errStr), nil
 		}
 		if err := store.DeleteProject(id); err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
-		return textResult("deleted"), nil
+		return textResult("project deleted"), nil
 	}
 }
 
@@ -304,7 +328,7 @@ func handleListIssues(store *Store) func(ctx context.Context, req mcp.CallToolRe
 		}
 		issues, err := store.ListIssues(pid, f)
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
 		return jsonResult(issues), nil
 	}
@@ -343,7 +367,7 @@ func handleCreateIssue(store *Store) func(ctx context.Context, req mcp.CallToolR
 		}
 		iss, err := store.CreateIssue(pid, title, desc, typ, state, 0, 0, 1, priority)
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
 		return jsonResult(iss), nil
 	}
@@ -371,7 +395,7 @@ func handleUpdateIssue(store *Store) func(ctx context.Context, req mcp.CallToolR
 		}
 		iss, err := store.UpdateIssue(id, title, desc, typ, state, assignee, 0, priority)
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
 		return jsonResult(iss), nil
 	}
@@ -388,7 +412,7 @@ func handleUpdateIssueState(store *Store) func(ctx context.Context, req mcp.Call
 		}
 		iss, err := store.UpdateIssue(id, "", "", "", newState, 0, 0, 0)
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
 		return jsonResult(iss), nil
 	}
@@ -402,9 +426,9 @@ func handleDeleteIssue(store *Store) func(ctx context.Context, req mcp.CallToolR
 			return mcp.NewToolResultError(errStr), nil
 		}
 		if err := store.DeleteIssue(id); err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
-		return textResult("deleted"), nil
+		return textResult("issue deleted"), nil
 	}
 }
 
@@ -417,7 +441,7 @@ func handleListComments(store *Store) func(ctx context.Context, req mcp.CallTool
 		}
 		comments, err := store.ListComments(id)
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
 		return jsonResult(comments), nil
 	}
@@ -434,7 +458,7 @@ func handleAddComment(store *Store) func(ctx context.Context, req mcp.CallToolRe
 		}
 		c, err := store.CreateComment(id, body, 1, 1)
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return mcp.NewToolResultError(cleanErr(err)), nil
 		}
 		return jsonResult(c), nil
 	}
