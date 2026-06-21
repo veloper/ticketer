@@ -160,7 +160,7 @@ func resolveProjectID(store *Store, id string) (int64, string) {
 	}
 	p, err := store.GetProjectBySlug(id)
 	if err != nil {
-		return 0, err.Error()
+		return 0, "project not found"
 	}
 	return p.ID, ""
 }
@@ -171,7 +171,7 @@ func resolveIssueID(store *Store, id string) (int64, string) {
 	}
 	iss, err := store.GetIssueBySlug(id)
 	if err != nil {
-		return 0, err.Error()
+		return 0, "issue not found"
 	}
 	return iss.ID, ""
 }
