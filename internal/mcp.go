@@ -22,7 +22,7 @@ func mcpUserFromCtx(ctx context.Context) *User {
 }
 
 // NewMCPServer creates an MCP server with all Ticketer tools backed by the Store.
-func NewMCPServer(store *Store) *server.MCPServer {
+func NewMCPServer(store *Store, userRole bool) *server.MCPServer {
 	s := server.NewMCPServer(
 		"ticketer",
 		"1.0.0",
@@ -30,12 +30,12 @@ func NewMCPServer(store *Store) *server.MCPServer {
 		server.WithResourceCapabilities(true, true),
 	)
 
-	// ── Info ──
+	// ── Info — always available ──
 	s.AddTool(mcp.NewTool("get_info",
 		mcp.WithDescription("Discover the full Ticketer surface — valid states (backlog→done), issue types, priority levels with labels, all registered users, and all projects. Call this first to understand what values are accepted by other tools."),
 	), handleGetInfo(store))
 
-	// ── Users ──
+	// ── Users — always available (read-only) ──
 	s.AddTool(mcp.NewTool("list_users",
 		mcp.WithDescription("List all users"),
 	), handleListUsers(store))
@@ -45,7 +45,7 @@ func NewMCPServer(store *Store) *server.MCPServer {
 		mcp.WithNumber("id", mcp.Description("User ID"), mcp.Required()),
 	), handleGetUser(store))
 
-	// ── Projects ──
+	// ── Projects — read-only for user role ──
 	s.AddTool(mcp.NewTool("list_projects",
 		mcp.WithDescription("List all projects"),
 	), handleListProjects(store))
@@ -55,27 +55,29 @@ func NewMCPServer(store *Store) *server.MCPServer {
 		mcp.WithString("id", mcp.Description("Project ID or slug"), mcp.Required()),
 	), handleGetProject(store))
 
-	s.AddTool(mcp.NewTool("create_project",
-		mcp.WithDescription("Create a new project — both name and slug are required"),
-		mcp.WithString("name", mcp.Description("Project name"), mcp.Required()),
-		mcp.WithString("slug", mcp.Description("Project slug"), mcp.Required()),
-		mcp.WithString("description", mcp.Description("Project description")),
-	), handleCreateProject(store))
+	if !userRole {
+		s.AddTool(mcp.NewTool("create_project",
+			mcp.WithDescription("Create a new project — both name and slug are required"),
+			mcp.WithString("name", mcp.Description("Project name"), mcp.Required()),
+			mcp.WithString("slug", mcp.Description("Project slug"), mcp.Required()),
+			mcp.WithString("description", mcp.Description("Project description")),
+		), handleCreateProject(store))
 
-	s.AddTool(mcp.NewTool("update_project",
-		mcp.WithDescription("Update an existing project — only provided fields will change"),
-		mcp.WithString("id", mcp.Description("Project ID or slug"), mcp.Required()),
-		mcp.WithString("name", mcp.Description("New name")),
-		mcp.WithString("slug", mcp.Description("New slug")),
-		mcp.WithString("description", mcp.Description("New description")),
-	), handleUpdateProject(store))
+		s.AddTool(mcp.NewTool("update_project",
+			mcp.WithDescription("Update an existing project — only provided fields will change"),
+			mcp.WithString("id", mcp.Description("Project ID or slug"), mcp.Required()),
+			mcp.WithString("name", mcp.Description("New name")),
+			mcp.WithString("slug", mcp.Description("New slug")),
+			mcp.WithString("description", mcp.Description("New description")),
+		), handleUpdateProject(store))
 
-	s.AddTool(mcp.NewTool("delete_project",
-		mcp.WithDescription("Delete a project and all its issues permanently"),
-		mcp.WithString("id", mcp.Description("Project ID or slug"), mcp.Required()),
-	), handleDeleteProject(store))
+		s.AddTool(mcp.NewTool("delete_project",
+			mcp.WithDescription("Delete a project and all its issues permanently"),
+			mcp.WithString("id", mcp.Description("Project ID or slug"), mcp.Required()),
+		), handleDeleteProject(store))
+	}
 
-	// ── Issues ──
+	// ── Issues — read-only for user role ──
 	s.AddTool(mcp.NewTool("list_issues",
 		mcp.WithDescription("List all issues in a project, optionally filtered by state or assignee"),
 		mcp.WithString("project_id", mcp.Description("Project ID or slug"), mcp.Required()),
@@ -88,39 +90,41 @@ func NewMCPServer(store *Store) *server.MCPServer {
 		mcp.WithString("id", mcp.Description("Issue ID or slug"), mcp.Required()),
 	), handleGetIssue(store))
 
-	s.AddTool(mcp.NewTool("create_issue",
-		mcp.WithDescription("Create a new issue in a project — only title and project_id are required"),
-		mcp.WithString("project_id", mcp.Description("Project ID or slug"), mcp.Required()),
-		mcp.WithString("title", mcp.Description("Issue title"), mcp.Required()),
-		mcp.WithString("description", mcp.Description("Issue description")),
-		mcp.WithString("type", mcp.Description("Issue type: epic, feature, bug, chore")),
-		mcp.WithString("state", mcp.Description("Initial state")),
-		mcp.WithNumber("priority", mcp.Description("Priority: 0=none, 1=urgent, 2=high, 3=medium, 4=low")),
-	), handleCreateIssue(store))
+	if !userRole {
+		s.AddTool(mcp.NewTool("create_issue",
+			mcp.WithDescription("Create a new issue in a project — only title and project_id are required"),
+			mcp.WithString("project_id", mcp.Description("Project ID or slug"), mcp.Required()),
+			mcp.WithString("title", mcp.Description("Issue title"), mcp.Required()),
+			mcp.WithString("description", mcp.Description("Issue description")),
+			mcp.WithString("type", mcp.Description("Issue type: epic, feature, bug, chore")),
+			mcp.WithString("state", mcp.Description("Initial state")),
+			mcp.WithNumber("priority", mcp.Description("Priority: 0=none, 1=urgent, 2=high, 3=medium, 4=low")),
+		), handleCreateIssue(store))
 
-	s.AddTool(mcp.NewTool("update_issue",
-		mcp.WithDescription("Update an existing issue — only provided fields will change (pass 0 to leave priority/assignee unchanged)"),
-		mcp.WithString("id", mcp.Description("Issue ID or slug"), mcp.Required()),
-		mcp.WithString("title", mcp.Description("New title")),
-		mcp.WithString("description", mcp.Description("New description")),
-		mcp.WithString("type", mcp.Description("New type")),
-		mcp.WithString("state", mcp.Description("New state")),
-		mcp.WithNumber("priority", mcp.Description("New priority")),
-		mcp.WithNumber("assignee", mcp.Description("New assignee user ID")),
-	), handleUpdateIssue(store))
+		s.AddTool(mcp.NewTool("update_issue",
+			mcp.WithDescription("Update an existing issue — only provided fields will change (pass 0 to leave priority/assignee unchanged)"),
+			mcp.WithString("id", mcp.Description("Issue ID or slug"), mcp.Required()),
+			mcp.WithString("title", mcp.Description("New title")),
+			mcp.WithString("description", mcp.Description("New description")),
+			mcp.WithString("type", mcp.Description("New type")),
+			mcp.WithString("state", mcp.Description("New state")),
+			mcp.WithNumber("priority", mcp.Description("New priority")),
+			mcp.WithNumber("assignee", mcp.Description("New assignee user ID")),
+		), handleUpdateIssue(store))
 
-	s.AddTool(mcp.NewTool("update_issue_state",
-		mcp.WithDescription("Move an issue to a new state in the pipeline — valid states: backlog, todo, in_progress, qa, done, cancelled"),
-		mcp.WithString("id", mcp.Description("Issue ID or slug"), mcp.Required()),
-		mcp.WithString("state", mcp.Description("Target state: backlog, todo, in_progress, qa, done, or cancelled"), mcp.Required()),
-	), handleUpdateIssueState(store))
+		s.AddTool(mcp.NewTool("update_issue_state",
+			mcp.WithDescription("Move an issue to a new state in the pipeline — valid states: backlog, todo, in_progress, qa, done, cancelled"),
+			mcp.WithString("id", mcp.Description("Issue ID or slug"), mcp.Required()),
+			mcp.WithString("state", mcp.Description("Target state: backlog, todo, in_progress, qa, done, or cancelled"), mcp.Required()),
+		), handleUpdateIssueState(store))
 
-	s.AddTool(mcp.NewTool("delete_issue",
-		mcp.WithDescription("Delete an issue permanently"),
-		mcp.WithString("id", mcp.Description("Issue ID or slug"), mcp.Required()),
-	), handleDeleteIssue(store))
+		s.AddTool(mcp.NewTool("delete_issue",
+			mcp.WithDescription("Delete an issue permanently"),
+			mcp.WithString("id", mcp.Description("Issue ID or slug"), mcp.Required()),
+		), handleDeleteIssue(store))
+	}
 
-	// ── Comments ──
+	// ── Comments — always available ──
 	s.AddTool(mcp.NewTool("list_comments",
 		mcp.WithDescription("List all comments on an issue, oldest first"),
 		mcp.WithString("issue_id", mcp.Description("Issue ID or slug"), mcp.Required()),
@@ -479,13 +483,23 @@ func (h *Handler) ServeMCP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := context.WithValue(r.Context(), mcpUserKey, user)
-	h.mcp.ServeHTTP(w, r.WithContext(ctx))
+	// ?role=user restricts to read-only + comment tools. Default is manager (full access).
+	mcpServer := h.mcp
+	if r.URL.Query().Get("role") == "user" {
+		mcpServer = h.mcpUser
+	}
+	mcpServer.ServeHTTP(w, r.WithContext(ctx))
 }
 
 // InitMCP sets up the MCP server and stores it on the Handler.
 func (h *Handler) InitMCP(store *Store) {
-	mcpServer := NewMCPServer(store)
-	h.mcp = server.NewStreamableHTTPServer(mcpServer,
+	manager := NewMCPServer(store, false)
+	user := NewMCPServer(store, true)
+	h.mcp = server.NewStreamableHTTPServer(manager,
+		server.WithEndpointPath("/mcp"),
+		server.WithStateful(true),
+	)
+	h.mcpUser = server.NewStreamableHTTPServer(user,
 		server.WithEndpointPath("/mcp"),
 		server.WithStateful(true),
 	)

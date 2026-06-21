@@ -11,6 +11,7 @@ type Handler struct {
 	store *Store
 	hub   *Hub
 	mcp   *server.StreamableHTTPServer
+	mcpUser *server.StreamableHTTPServer
 }
 
 func NewHandler(store *Store, hub *Hub) *Handler {
